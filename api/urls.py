@@ -12,5 +12,5 @@ todo_api.register(TaskResource())
 urlpatterns = todo_api.urls
 
 urlpatterns += [
-    url(r'^home$', home_page, name='home'),
+    url(r'^$', home_page, name='home'),
 ]

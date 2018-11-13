@@ -1,0 +1,10 @@
+body {
+    background-image: url('/static/img/bg.jpg');
+}
+
+.my-error-class {
+    color:#FF0000;
+}
+.my-valid-class {
+    color:#00CC00; /* green */
+}

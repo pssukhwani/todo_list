@@ -3,11 +3,12 @@ import json
 from django.conf.urls import url
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.models import User
-from django.db.models import Q
+from django.http import HttpResponseRedirect
+from tastypie.authentication import BasicAuthentication
+from tastypie.authorization import DjangoAuthorization
 from tastypie.constants import ALL
 from tastypie.http import HttpUnauthorized, HttpForbidden
 from tastypie.resources import ModelResource
-from tastypie.utils import trailing_slash
 
 from core.models import Task
 from tastypie import fields
@@ -22,15 +23,10 @@ class UserResource(ModelResource):
     def determine_format(self, request):
         return "application/json"
 
-    def get_object_list(self, request):
-        users = super(UserResource, self).get_object_list(request)
-        return users.filter(Q(username=request.POST.get("username")) | Q(email=request.POST.get("email")))
-
     def prepend_urls(self):
         return [
             url(r"^login", self.wrap_view('login'), name="api_login"),
             url(r'^logout', self.wrap_view('logout'), name='api_logout'),
-            url(r'^signup', self.wrap_view('signup'), name='api_signup'),
         ]
 
     def login(self, request, **kwargs):
@@ -46,11 +42,12 @@ class UserResource(ModelResource):
             if user.is_active:
                 login(request, user)
                 return self.create_response(request, {
-                    'success': True
+                    'success': True,
+                    'reason': "Successfully logged in"
                 })
             return self.create_response(request, {
                 'success': False,
-                'reason': 'disabled',
+                'reason': 'Account is disabled',
             }, HttpForbidden)
         return self.create_response(request, {
             'success': False,
@@ -58,10 +55,10 @@ class UserResource(ModelResource):
         }, HttpUnauthorized)
 
     def logout(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
+        self.method_check(request, allowed=['get'])
         if request.user and request.user.is_authenticated():
             logout(request)
-            return self.create_response(request, {'success': True})
+            return HttpResponseRedirect('/')
         else:
             return self.create_response(request, {'success': False}, HttpUnauthorized)
 
@@ -73,8 +70,26 @@ class TaskResource(ModelResource):
     class Meta:
         queryset = Task.objects.all()
         resource_name = 'task'
-        list_allowed_methods = ['get', 'put', 'post', 'delete']
+        list_allowed_methods = ['get', 'post', 'delete']
         filtering = {'title': ALL}
+        authentication = BasicAuthentication()
+        authorization = DjangoAuthorization()
 
     def determine_format(self, request):
         return "application/json"
+
+    def prepend_urls(self):
+        return [
+            url(r"^task", self.wrap_view('task'), name="api_task"),
+            url(r"^task-delete", self.wrap_view('task-update'), name="api_task_update"),
+        ]
+
+    def get_object_list(self, request):
+        task = super(TaskResource, self).get_object_list(request)
+        return task.filter(user=request.user)
+
+    def task(self, request, **kwargs):
+        pass
+
+    def task_update(self, request, **kwargs):
+        pass

@@ -7,7 +7,7 @@
     Registration/Login
 {% endblock %}
 {% block css %}
-    <link rel="stylesheet" href="{% static 'login.css' %}">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
 {% endblock %}
 {% block body %}
     <div class="container">
@@ -50,5 +50,38 @@
 {% endblock %}
 {% block js %}
     <script type="application/javascript">
+        $("#login-form").validate({
+            errorClass: "my-error-class",
+            validClass: "my-valid-class",
+            rules: {
+                username: "required",
+                password: "required",
+            },
+            messages: {
+                username: "Please enter username",
+                password: {
+                    required: "Please enter password"
+                }
+            },
+            submitHandler: function(form, event) {
+                $.ajax({
+                    url: form.action,
+                    type: "POST",
+                    data: $(form).serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            $.toaster({ priority : 'success', title : 'Login', message : response.reason});
+                            setTimeout(function(){ location.reload();}, 1000);
+                        } else {
+                            $.toaster({ priority : 'success', title : 'Login', message : response.reason});
+                        }
+                        event.preventDefault();
+                    }, error: function () {
+                        $.toaster({ priority : 'info', title : 'Login', message : "Incorrect Id and Password"});
+                    }
+                });
+                return false;
+            }
+        });
     </script>
 {% endblock %}

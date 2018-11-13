@@ -1,2 +1,88 @@
 {% extends 'base.html' %}
-<p>You have successfully logged in</p>
+
+{% load static %}
+
+{% block title %}
+    Task
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/task.css' %}">
+{% endblock %}
+
+{% block body %}
+    <div class="header">
+        <h2 style="margin:10px">To Do List</h2>
+        <input type="text" id="myInput" placeholder="Title" style="color: black">
+    </div>
+    <div class="header">
+        <textarea rows="10" cols="10" id="myText" placeholder="Description" style="color: black"></textarea>
+    </div>
+    <div class="header">
+        <span onclick="newElement()" class="addBtn">Add</span>
+    </div>
+    <ul id="myUL">
+    </ul>
+{% endblock %}
+
+{% block js %}
+    <script type="application/javascript">
+        var myNodelist = document.getElementsByTagName("LI");
+        var i;
+        for (i = 0; i < myNodelist.length; i++) {
+          var span = document.createElement("SPAN");
+          var txt = document.createTextNode("\u00D7");
+          span.className = "close";
+          span.appendChild(txt);
+          myNodelist[i].appendChild(span);
+        }
+
+        // Click on a close button to hide the current list item
+        var close = document.getElementsByClassName("close");
+        var i;
+        for (i = 0; i < close.length; i++) {
+          close[i].onclick = function() {
+            var div = this.parentElement;
+            div.style.display = "none";
+          }
+        }
+
+        // Add a "checked" symbol when clicking on a list item
+        var list = document.querySelector('ul');
+        list.addEventListener('click', function(ev) {
+          if (ev.target.tagName === 'LI') {
+            ev.target.classList.toggle('checked');
+          }
+        }, false);
+
+        // Create a new list item when clicking on the "Add" button
+        function newElement() {
+          var li = document.createElement("li");
+          var inputValue = document.getElementById("myInput").value;
+          var textValue = document.getElementById("myText").value;
+          var inputNode = document.createTextNode(inputValue);
+          var textNode = document.createTextNode(textValue);
+          li.appendChild(inputNode);
+          li.appendChild(textNode);
+          if (inputValue === '') {
+            alert("You must write something!");
+          } else {
+            document.getElementById("myUL").appendChild(li);
+          }
+          document.getElementById("myInput").value = "";
+
+          var span = document.createElement("SPAN");
+          var txt = document.createTextNode("\u00D7");
+          span.className = "close";
+          span.appendChild(txt);
+          li.appendChild(span);
+
+          for (i = 0; i < close.length; i++) {
+            close[i].onclick = function() {
+              var div = this.parentElement;
+              div.style.display = "none";
+            }
+          }
+        }
+    </script>
+{% endblock %}
