@@ -65,42 +65,6 @@ class UserResource(ModelResource):
         else:
             return self.create_response(request, {'success': False}, HttpUnauthorized)
 
-    def obj_create(self, bundle, request=None, **kwargs):
-        username = bundle.data['username']
-        password = bundle.data['password']
-        email = bundle.data['email']
-        user = User.objects.create_user(username=username, password=password, email=email)
-        return user
-
-    def signup(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-        data = self.serialize(request, request.POST, format=self.determine_format(request))
-        data = json.loads(data)
-        username = data.get('username', None)
-        email = data.get('email', None)
-        password = data.get('password', None)
-        confirm_password = data.get('confirm-password', None)
-        user_object = self.get_object_list(request)
-        if user_object:
-            return self.create_response(request, {
-                'success': False,
-                'reason': 'User already exist',
-            }, HttpUnauthorized)
-
-        if password != confirm_password:
-            return self.create_response(request, {
-                'success': False,
-                'reason': 'Password do not match',
-            }, HttpUnauthorized)
-
-        user = self.obj_create(data, request)
-
-        if user:
-            login(request, user)
-            return self.create_response(request, {
-                'success': True
-            })
-
 
 class TaskResource(ModelResource):
     user = fields.ForeignKey(UserResource, attribute='user')
