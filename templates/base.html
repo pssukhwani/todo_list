@@ -1,0 +1,24 @@
+{% load static %}
+<html>
+    <head>
+        <title>{% block title %} {% endblock %} | ToDo</title>
+        <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+        <script src="//code.jquery.com/jquery-3.3.1.min.js"
+                integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+        <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+        {% block css %}
+        {% endblock %}
+    </head>
+    <body>
+        {% if user.is_authenticated %}
+            <form method="POST" action="{% url 'api_logout' api_name %}">
+                <button class="btn btn-info btn-lg" style="float: right; margin-right: 30px;">
+                  <span class="glyphicon glyphicon-log-out"></span> Logout
+                </button>
+            </form>
+        {% endif %}
+        {% block body %}{% endblock %}
+        {% block js %}{% endblock %}
+    </body>
+</html>
