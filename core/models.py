@@ -10,6 +10,10 @@ STATE_CHOICES = (
     ('completed', 'Completed'),
 )
 
+TASK_TYPE = (
+    ('standalone', 'Standalone'),
+    ('child', 'Child'),
+)
 
 class Task(TimeStampedModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -20,6 +24,9 @@ class Task(TimeStampedModel):
     slug = AutoSlugField(populate_from='title')
     sub_task = models.ForeignKey("self", blank=True, null=True, help_text="This is for sub task",
                                  on_delete=models.SET_NULL)
+    task_type = models.CharField("Task Type", choices=TASK_TYPE, max_length=11, default='standalone',
+                                 help_text='This is used to differentiate if the task is sub-task then it will be '
+                                           'changed child.')
     set_alert = models.PositiveSmallIntegerField(default=0, blank=True, null=True,
                                                  help_text="This is used for alert message. If you want to trigger "
                                                            "alert before due date then only set this.")
@@ -29,3 +36,8 @@ class Task(TimeStampedModel):
 
     def __str__(self):
         return u"{title}_{id}".format(title=self.slug, id=self.id)
+
+    def save(self, **kwargs):
+        if self.sub_task:
+            self.task_type = 'child'
+        super(Task, self).save(**kwargs)
