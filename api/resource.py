@@ -88,13 +88,30 @@ class TaskResource(ModelResource):
 
     def get_object_list(self, request):
         task = super(TaskResource, self).get_object_list(request)
-        if request.POST.get("delete") or request.POST.get("checked"):
-            task_id = request.POST.get("delete") or request.POST.get("checked")
+        if request.POST.get("delete") or request.POST.get("checked") or request.POST.get("modalUpdate"):
+            task_id = request.POST.get("delete") or request.POST.get("checked") or request.POST.get("id")
             return task.filter(id=task_id, user=request.user, is_active=True)
         return task.filter(title=request.POST.get("title"), user=request.user, is_active=True)
 
+    def obj_update(self, bundle, request=None, **kwargs):
+        task = Task.objects.get(id=bundle.data.get("id"))
+        task.title = bundle.data.get("title")
+        task.description = bundle.data.get("description")
+        try:
+            task.due_date = datetime.strptime(bundle.data.get("date"), "%d/%m/%Y %H:%M:%S")
+        except ValueError:
+            task.due_date = None
+        task.set_alert = bundle.data.get("set_alert")
+        task.save()
+        bundle.obj = task
+        bundle.obj.save()
+        return bundle
+
     def obj_create(self, bundle, request=None, **kwargs):
-        date_time = datetime.strptime(bundle.data.get("datetime"), "%d/%m/%Y %H:%M:%S")
+        try:
+            date_time = datetime.strptime(bundle.data.get("datetime"), "%d/%m/%Y %H:%M:%S")
+        except ValueError:
+            date_time = None
         task = Task.objects.create(user=request.user, title=bundle.data.get("title"),
                                    description=bundle.data.get("description"), due_date=date_time,
                                    set_alert=bundle.data.get("set_alert"))
@@ -114,10 +131,14 @@ class TaskResource(ModelResource):
         bundle.obj.save()
         return bundle
 
+    def get_bundle_data(self, request, resource):
+        bundle = resource.build_bundle(data=request.POST, request=request)
+        return bundle
+
     def task_create(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
         task_resource = TaskResource()
-        bundle = task_resource.build_bundle(data=request.POST, request=request)
+        bundle = self.get_bundle_data(request, task_resource)
         task_query_set = task_resource.get_object_list(request)
         if task_query_set:
             return self.create_response(request, {
@@ -134,6 +155,12 @@ class TaskResource(ModelResource):
         self.method_check(request, allowed=['post'])
         task_resource = TaskResource()
         task_query_set = task_resource.get_object_list(request)
+        bundle = self.get_bundle_data(request, task_resource)
+        if not task_query_set:
+            return self.create_response(request, {
+                'success': False,
+                'reason': "Couldn't find the task. Please refresh page and try again",
+            })
         task_obj = task_query_set[0]
         if request.POST.get("delete"):
             task_obj.is_active = False
@@ -155,8 +182,13 @@ class TaskResource(ModelResource):
                 'success': True,
                 'reason': 'Successfully saved task preferences',
             })
-        else:
+        elif request.POST.get("title"):
+            self.obj_update(bundle, request)
             return self.create_response(request, {
-                'success': False,
-                'reason': "Couldn't find the task. Please refresh page and try again",
+                'success': True,
+                'reason': 'Successfully saved task preferences',
             })
+        return self.create_response(request, {
+            'success': False,
+            'reason': "Couldn't find the task. Please refresh page and try again",
+        })

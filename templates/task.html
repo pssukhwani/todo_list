@@ -36,7 +36,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="description">Due Date Time</label>
-                                <input type="text" class="form-control" name="datetime" id="datepicker" placeholder="Set Due Date Time">
+                                <input type="text" class="form-control datepicker" name="datetime" placeholder="Set Due Date Time">
                             </div>
                         </div>
                     </div>
@@ -97,27 +97,32 @@
             {% for modalitem in task %}
                 <div class="modal" id="myModal_{{ modalitem.id }}">
                     <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h4 class="modal-title">{{ modalitem.title }}</h4>
-                            </div>
-                            <div class="modal-body">
-                                <form class="form-horizontal">
+                        <form class="form-horizontal taskModalForm" action="{% url 'api_task_update' api_name %}" method="post">
+                            {% csrf_token %}
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <input type="hidden" name="modalUpdate" value="True">
+                                    <h4 class="modal-title">{{ modalitem.title }}</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <input type="hidden" class="form-control" name="id" value="{{ modalitem.id }}">
+                                    </div>
                                     <div class="form-group">
                                         <label for="title" class="col-form-label">Title:</label>
-                                        <input type="text" class="form-control" id="title" name="modaltitle" value="{{ modalitem.title }}">
+                                        <input type="text" class="form-control" name="title" value="{{ modalitem.title }}">
                                     </div>
                                     <div class="form-group">
                                         <label for="description-text" class="col-form-label">Description:</label>
-                                        <textarea class="form-control" id="description-text" name="modaldescription">{{ modalitem.description }}</textarea>
+                                        <textarea class="form-control" name="description">{{ modalitem.description }}</textarea>
                                     </div>
                                     <div class="form-group">
                                         <label for="date" class="col-form-label">Due Date Time:</label>
-                                        <input type="text" class="form-control" id="date" name="modaldate" value="{{ modalitem.due_date }}">
+                                        <input type="text" class="form-control datepicker" name="date" value="{{ modalitem.due_date }}">
                                     </div>
                                     <div class="form-group">
                                         <label for="setalert" class="col-form-label">Set Alert Hours:</label>
-                                        <input type="number" min="0" class="form-control" id="setalert" name="modalsetalert" value="{{ modalitem.set_alert }}">
+                                        <input type="number" min="0" class="form-control" name="set_alert" value="{{ modalitem.set_alert }}">
                                     </div>
                                     <small class="text-muted">This field is for to set hours before the due date and time of notification will be triggered</small>
                                     {% if modalitem.sub_task.all %}
@@ -126,50 +131,94 @@
                                             {% for subtask in modalitem.sub_task.all %}
                                                 <div class="form-group">
                                                     <label for="subtasktitle" class="col-form-label">Title:</label>
-                                                    <input type="text" class="form-control subTaskTitle" name="subTaskTitle" value="{{ subtask.title }}">
+                                                    <input type="text" class="form-control subTaskTitle" name="subTaskTitle" value="{{ subtask.title }}" readonly>
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="subtaskdescription" class="col-form-label">Description:</label>
-                                                    <input type="text" class="form-control subTaskDescription" name="subTaskDescription" value="{{ subtask.description }}">
+                                                    <input type="text" class="form-control subTaskDescription" name="subTaskDescription" value="{{ subtask.description }}" readonly>
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="subtaskduedate" class="col-form-label">Due Date Time:</label>
-                                                    <input type="text" class="form-control subtaskduedate" name="subtaskduedate" value="{{ subtask.due_date }}">
+                                                    <input type="text" class="form-control subtaskduedate" name="subtaskduedate" value="{{ subtask.due_date }}" readonly>
                                                 </div>
                                                 <div class="form-group">
                                                     <label for="subtasksetalert" class="col-form-label">Set Alert Hours:</label>
-                                                    <input type="number" min="0" class="form-control subtasksetalert" name="subtasksetalert" value="{{ subtask.set_alert }}">
+                                                    <input type="number" min="0" class="form-control subtasksetalert" name="subtasksetalert" value="{{ subtask.set_alert }}" readonly>
                                                 </div>
                                                 <small class="text-muted">This field is for to set hours before the due date and time of notification will be triggered</small>
                                             {% endfor %}
                                         </div>
                                     {% endif %}
-                                </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-danger">Save</button>
+                                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                                </div>
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-danger" data-dismiss="modal">Save</button>
-                                <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-                            </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
             {% endfor %}
         {% endif %}
     </div>
-{#            <ul id="myUL">#}
-{#                {% for item in task %}#}
-{#                    {% if item.task_type == 'standalone' %}#}
-{#                        <li {% if item.state == 'completed' %}class="checked"{% endif %} data-model-name="{{ item.id }}">{{ item.title }}</li>#}
-{#                    {% endif %}#}
-{#                {% endfor %}#}
-{#            </ul>#}
-{#        </div>#}
-{#    </div>#}
 {% endblock %}
 
 {% block js %}
     <script type="application/javascript">
         $(document).ready(function () {
+            $(".taskModalForm").submit(function (event) {
+                var currentObject = $(this)[0];
+                    $.ajax({
+                        url: currentObject.action,
+                        type: "POST",
+                        data: $(currentObject).serialize(),
+                        success: function (response) {
+                            if (response.success) {
+                                $.toaster({priority: 'success', title: 'Task', message: response.reason});
+                                setTimeout(function () {
+                                    location.reload();
+                                }, 500);
+                            } else {
+                                debugger;
+                                $.toaster({priority: 'danger', title: 'Task', message: response.reason});
+                            }
+                            event.preventDefault();
+                        }, error: function () {
+                            $.toaster({ priority: 'danger', title: 'Task', message: "Task with same title already exist"});
+                        }
+                    });
+                    return false;
+            });
+            $(".taskdModalForm").validate({
+                {#errorClass: "my-error-class",#}
+                {#validClass: "my-valid-class",#}
+                {#rules: {#}
+                {#    title: "required",#}
+                {#messages: {#}
+                {#    title: "Please enter title",#}
+                {#submitHandler: function (event) {#}
+                {#    var currentObject = $(this.currentForm)[0];#}
+                {#    debugger;#}
+                {#    $.ajax({#}
+                {#        url: currentObject.action,#}
+                {#        type: "POST",#}
+                {#        data: $(currentObject).serialize(),#}
+                {#        success: function (response) {#}
+                {#            if (response.success) {#}
+                {#                $.toaster({priority: 'success', title: 'Task', message: response.reason});#}
+                {#                setTimeout(function () {#}
+                {#                    location.reload();#}
+                {#                }, 500);#}
+                {#            } else {#}
+                {#                $.toaster({priority: 'danger', title: 'Task', message: response.reason});#}
+                {#            }#}
+                {#            event.preventDefault();#}
+                {#        }, error: function () {#}
+                {#            $.toaster({ priority: 'danger', title: 'Task', message: "Task with same title already exist"});#}
+                {#        }#}
+                {#    });#}
+                {#    return false;#}
+            });
             $(".checkinput").click(function () {
                 var currentObj = $(this);
                 var classObject = currentObj.next().next()[0].classList;
@@ -223,7 +272,7 @@
                 });
                 return false;
             });
-            $('#datepicker').datetimepicker({
+            $('.datepicker').datetimepicker({
                 format: "DD/MM/YYYY HH:mm:ss",
                 dayViewHeaderFormat: "DD/MM/YYYY HH:mm:ss"
             });
@@ -280,41 +329,6 @@
                     return false;
                 }
             });
-
-            // Add a "checked" symbol when clicking on a list item
-            {#var list = document.querySelector('ul');#}
-            {#var Allcard = $(".card-deck");#}
-            {#list.addEventListener('click', function(ev) {#}
-            {#  if (ev.target.tagName === 'div') {#}
-            {#      var checked;#}
-            {#      if (ev.target.classList.value == "checked") {#}
-            {#          checked = false;#}
-            {#      } else {#}
-            {#          checked = true;#}
-            {#      }#}
-            {#      var objData = {#}
-            {#          "objId": ev.target.getAttribute("data-model-name"),#}
-            {#          "checkedOrNot": checked,#}
-            {#      };#}
-            {#      var url = "";#}
-            {#      $.ajax({#}
-            {#          url: url,#}
-            {#          type: "POST",#}
-            {#          data: objData,#}
-            {#          success: function (response) {#}
-            {#              if(response.success) {#}
-            {#                  ev.target.classList.toggle('checked');#}
-            {#                  $.toaster({ priority : 'success', title : 'Task', message : "Task Completed"});#}
-            {#              } else {#}
-            {#                  $.toaster({ priority : 'danger', title : 'Task', message : "Something went wrong"});#}
-            {#              }#}
-            {#          }, error: function () {#}
-            {#              $.toaster({ priority : 'danger', title : 'Task', message : "Something went wrong"});#}
-            {#          }#}
-            {#      });#}
-            {#  }#}
-            {#), false;#}
-
         });
     </script>
 {% endblock %}
