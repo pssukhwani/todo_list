@@ -15,12 +15,12 @@
         <h2>To Do List</h2>
         <div class="row">
             <div class="col-md-12">
-                <form>
+                <form method="post" action="{% url 'api_task' api_name %}" id="taskAddForm">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="title">Title</label>
-                                <input type="email" class="form-control" id="title" placeholder="Enter Title">
+                                <label>Title</label>
+                                <input type="text" class="form-control" id="title" placeholder="Enter Title" name="title">
                             </div>
                         </div>
                     </div>
@@ -35,19 +35,28 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="description">Due Date</label>
-                                <input type="text" class="form-control" name="date" id="datepicker" placeholder="Due Date">
+                                <label for="description">Due Date Time</label>
+                                <input type="text" class="form-control" name="datetime" id="datepicker" placeholder="Set Due Date Time">
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
+                                <label for="description">Set Alert Hours</label>
+                                <input type="number" class="form-control" name="set_alert" value="0">
+                            </div>
+                            <small class="text-muted">This field is for to set hours before the due date and time of notification will be triggered</small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
                                 <label for="description">Sub Task</label>
-                                <select class="form-control">
+                                <select class="form-control" name="sub_task">
                                     <option value="SubTask">Sub Task</option>
                                     {% for item in task %}
-                                        {% if item.task_type == 'standalone' %}
+                                        {% if item.task_type == 'parent' %}
                                             <option value="{{ item.id }}">{{ item.title }}</option>
                                         {% endif %}
                                     {% endfor %}
@@ -60,22 +69,35 @@
                 </form>
             </div>
         </div>
-        <h2>Task</h2>
-        <div class="card-deck col-md-12">
-            {% for item in task %}
-                {% if item.task_type == 'standalone' %}
-                    <div class="card col-md-3">
-                        <strong class="text-center">{{ item.title }}<a href="" class="badge badge-light float-right">
-                            <i class="fa fa-edit" style="font-size: 15px"></i></a>
-                            <a href="" class="badge badge-light float-right"><i class="fa fa-trash" style="font-size: 15px"></i></a>
-                        </strong>
-                        <div class="card-body text-center">
-                            <p class="card-text">{{ item.description }}</p>
+        {% if task %}
+{#            <form method="post" action="{% url 'home' %}" id="taskSearchForm">#}
+{#                {% csrf_token %}#}
+{#                <div class="row">#}
+{#                    <div class="col-md-6">#}
+{#                        <div class="form-group">#}
+{#                            <label>Search</label>#}
+{#                            <input type="text" class="form-control" id="search" placeholder="Search with Title" name="search">#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </form>#}
+            <h2>Task</h2>
+            <div class="card-deck">
+                {% for item in task %}
+                    {% if item.task_type == 'parent' %}
+                        <div class="card col-md-3">
+                            <strong class="text-center">{{ item.title }}<a href="" class="badge badge-light float-right">
+                                <i class="fa fa-edit" style="font-size: 15px"></i></a>
+                                <a href="{% url 'api_task_update' api_name %}" name="{{ item.id }}" class="badge badge-light float-right deleteTask"><i class="fa fa-trash" style="font-size: 15px"></i></a>
+                            </strong>
+                            <div class="card-body text-center">
+                                <p class="card-text">{{ item.description }}</p>
+                            </div>
                         </div>
-                    </div>
-                {% endif %}
-            {% endfor %}
-        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
     </div>
 {#            <ul id="myUL">#}
 {#                {% for item in task %}#}
@@ -91,80 +113,159 @@
 {% block js %}
     <script type="application/javascript">
         $(document).ready(function () {
-            $('#datepicker').datetimepicker();
-        });
-        var myNodelist = document.getElementsByTagName("LI");
-        var i;
-        for (i = 0; i < myNodelist.length; i++) {
-          var deleteSpan = document.createElement("a");
-          var editSpan = document.createElement("a");
-          var deletetxt = document.createTextNode("\u00D7");
-          var editTxt = document.createTextNode("\u270E");
-          deleteSpan.className = "close";
-          editSpan.className = "edit";
-          deleteSpan.appendChild(deletetxt);
-          editSpan.appendChild(editTxt);
-          myNodelist[i].appendChild(deleteSpan);
-          myNodelist[i].appendChild(editSpan);
-        }
+            $(".deleteTask").click(function () {
+                var confirmMessage = confirm("Are you sure you want to delete?");
+                if (!confirmMessage) {
+                    return false;
+                }
+                var currentObj = $(this);
+                $.ajax({
+                    url: currentObj.attr("href"),
+                    type: "POST",
+                    data: {"delete": currentObj.attr("name")},
+                    success: function (response) {
+                        if (response.success) {
+                            $.toaster({ priority : 'success', title : 'Task', message : response.reason});
+                            setTimeout(function(){ location.reload();}, 500);
+                        } else {
+                            $.toaster({ priority : 'danger', title : 'Task', message : response.reason});
+                        }
+                    }, error: function () {
+                        $.toaster({ priority : 'danger', title : 'Title', message : "Something went wrong"});
+                    }
+                });
+                return false;
+            });
+            $('#datepicker').datetimepicker({
+                format: "DD/MM/YYYY HH:MM:SS",
+                dayViewHeaderFormat: "DD/MM/YYYY HH:MM:SS"
+            });
 
-        // Click on a close button to hide the current list item
-        var close = document.getElementsByClassName("close");
-        var i;
-        for (i = 0; i < close.length; i++) {
-          close[i].onclick = function() {
-            var div = this.parentElement;
-            div.style.display = "none";
-          }
-        }
+            $('#search').bind('keyup', function() {
+                $('#taskSearchForm').submit();
+            });
 
-        // Add a "checked" symbol when clicking on a list item
-        var list = document.querySelector('ul');
-        var Allcard = $(".card-deck");
-        Allcard.addEventListener('click', function(ev) {
-          if (ev.target.tagName === 'div') {
-              var checked;
-              if (ev.target.classList.value == "checked") {
-                  checked = false;
-              } else {
-                  checked = true;
+            $('#taskSearchForm').validate({
+                submitHandler: function(form, event) {
+                    $.ajax({
+                        url: form.action,
+                        type: "POST",
+                        data: $(form).serialize(),
+                        success: function (response) {
+                            if (response.success) {
+                                $.toaster({ priority : 'success', title : 'Task', message : response.reason});
+                                setTimeout(function(){ location.reload();}, 500);
+                            }
+                        }, error: function () {
+                            $.toaster({ priority : 'danger', title : 'Title', message : "Something went wrong"});
+                        }
+                    });
+                    return false;
+                }
+            });
+
+            $("#taskAddForm").validate({
+                errorClass: "my-error-class",
+                validClass: "my-valid-class",
+                rules: {
+                    title: "required",
+                },
+                messages: {
+                    title: "Please enter title",
+                },
+                submitHandler: function(form, event) {
+                    $.ajax({
+                        url: form.action,
+                        type: "POST",
+                        data: $(form).serialize(),
+                        success: function (response) {
+                            if (response.success) {
+                                $.toaster({ priority : 'success', title : 'Task', message : response.reason});
+                                setTimeout(function(){ location.reload();}, 500);
+                            } else {
+                                $.toaster({ priority : 'danger', title : 'Task', message : response.reason});
+                            }
+                            event.preventDefault();
+                        }, error: function () {
+                            $.toaster({ priority : 'danger', title : 'Task', message : "Task with same title already exist"});
+                        }
+                    });
+                    return false;
+                }
+            });
+            var myNodelist = document.getElementsByTagName("LI");
+            var i;
+            for (i = 0; i < myNodelist.length; i++) {
+              var deleteSpan = document.createElement("a");
+              var editSpan = document.createElement("a");
+              var deletetxt = document.createTextNode("\u00D7");
+              var editTxt = document.createTextNode("\u270E");
+              deleteSpan.className = "close";
+              editSpan.className = "edit";
+              deleteSpan.appendChild(deletetxt);
+              editSpan.appendChild(editTxt);
+              myNodelist[i].appendChild(deleteSpan);
+              myNodelist[i].appendChild(editSpan);
+            }
+
+            // Click on a close button to hide the current list item
+            var close = document.getElementsByClassName("close");
+            var i;
+            for (i = 0; i < close.length; i++) {
+              close[i].onclick = function() {
+                var div = this.parentElement;
+                div.style.display = "none";
               }
-              var objData = {
-                  "objId": ev.target.getAttribute("data-model-name"),
-                  "checkedOrNot": checked,
-              };
-              var url = "";
-              $.ajax({
-                  url: url,
-                  type: "POST",
-                  data: objData,
-                  success: function (response) {
-                      if(response.success) {
-                          ev.target.classList.toggle('checked');
-                          $.toaster({ priority : 'success', title : 'Task', message : "Task Completed"});
-                      } else {
-                          $.toaster({ priority : 'danger', title : 'Task', message : "Something went wrong"});
-                      }
-                  }, error: function () {
-                      $.toaster({ priority : 'danger', title : 'Task', message : "Something went wrong"});
-                  }
-              });
-          }
-        }, false);
+            }
 
-        // Create a new list item when clicking on the "Add" button
-        function newElement() {
-          var li = document.createElement("li");
-          var inputValue = document.getElementById("myInput").value;
-          var inputNode = document.createTextNode(inputValue);
-          li.appendChild(inputNode);
-          if (inputValue === '') {
-            $.toaster({ priority : 'danger', title : 'ToDo', message : "Title cannot be empty"});
-          } else {
-            document.getElementById("myUL").appendChild(li);
-          }
-          document.getElementById("myInput").value = "";
-          document.getElementsByTagName("textarea")[0].value = "";
-        }
+            // Add a "checked" symbol when clicking on a list item
+            {#var list = document.querySelector('ul');#}
+            {#var Allcard = $(".card-deck");#}
+            {#list.addEventListener('click', function(ev) {#}
+            {#  if (ev.target.tagName === 'div') {#}
+            {#      var checked;#}
+            {#      if (ev.target.classList.value == "checked") {#}
+            {#          checked = false;#}
+            {#      } else {#}
+            {#          checked = true;#}
+            {#      }#}
+            {#      var objData = {#}
+            {#          "objId": ev.target.getAttribute("data-model-name"),#}
+            {#          "checkedOrNot": checked,#}
+            {#      };#}
+            {#      var url = "";#}
+            {#      $.ajax({#}
+            {#          url: url,#}
+            {#          type: "POST",#}
+            {#          data: objData,#}
+            {#          success: function (response) {#}
+            {#              if(response.success) {#}
+            {#                  ev.target.classList.toggle('checked');#}
+            {#                  $.toaster({ priority : 'success', title : 'Task', message : "Task Completed"});#}
+            {#              } else {#}
+            {#                  $.toaster({ priority : 'danger', title : 'Task', message : "Something went wrong"});#}
+            {#              }#}
+            {#          }, error: function () {#}
+            {#              $.toaster({ priority : 'danger', title : 'Task', message : "Something went wrong"});#}
+            {#          }#}
+            {#      });#}
+            {#  }#}
+            {#), false;#}
+
+            // Create a new list item when clicking on the "Add" button
+            function newElement() {
+              var li = document.createElement("li");
+              var inputValue = document.getElementById("myInput").value;
+              var inputNode = document.createTextNode(inputValue);
+              li.appendChild(inputNode);
+              if (inputValue === '') {
+                $.toaster({ priority : 'danger', title : 'ToDo', message : "Title cannot be empty"});
+              } else {
+                document.getElementById("myUL").appendChild(li);
+              }
+              document.getElementById("myInput").value = "";
+              document.getElementsByTagName("textarea")[0].value = "";
+            }
+        });
     </script>
 {% endblock %}

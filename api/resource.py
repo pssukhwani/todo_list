@@ -4,14 +4,16 @@ from django.conf.urls import url
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from tastypie.authentication import BasicAuthentication
 from tastypie.authorization import DjangoAuthorization
 from tastypie.constants import ALL
-from tastypie.http import HttpUnauthorized, HttpForbidden
+from tastypie.http import HttpUnauthorized, HttpForbidden, HttpBadRequest
 from tastypie.resources import ModelResource
 
 from core.models import Task
 from tastypie import fields
+from datetime import datetime
 
 
 class UserResource(ModelResource):
@@ -70,7 +72,7 @@ class TaskResource(ModelResource):
     class Meta:
         queryset = Task.objects.all()
         resource_name = 'task'
-        list_allowed_methods = ['get', 'post', 'delete']
+        list_allowed_methods = ['post']
         filtering = {'title': ALL}
         authentication = BasicAuthentication()
         authorization = DjangoAuthorization()
@@ -80,25 +82,67 @@ class TaskResource(ModelResource):
 
     def prepend_urls(self):
         return [
-            url(r"^task", self.wrap_view('task'), name="api_task"),
-            url(r"^task-delete", self.wrap_view('task_delete'), name="api_task_update"),
+            url(r"^task-create", self.wrap_view('task_create'), name="api_task"),
+            url(r"^task-update", self.wrap_view('task_update'), name="api_task_update"),
         ]
 
     def get_object_list(self, request):
         task = super(TaskResource, self).get_object_list(request)
-        return task.get(id=request.user)
+        if request.POST.get("delete"):
+            return task.filter(id=request.POST.get("delete"), user=request.user, is_active=True)
+        return task.filter(title=request.POST.get("title"), user=request.user, is_active=True)
 
-    def task(self, request, **kwargs):
-        title = request.POST.get("title")
-        description = request.POST.get("description")
-        sub_task = request.POST.get("sub_task")
-        due_date = request.POST.get("date")
-        set_alert = request.POST.get("set_alert")
-        task_object = self.get_object_list(request)
-        if task_object:
-            task_object.get(id=request.POST.get("id"))
-        else:
-            Task.objects.create(user=request.user, title=request.POST)
+    def obj_create(self, bundle, request=None, **kwargs):
+        date_time = datetime.strptime(bundle.data.get("datetime"), "%d/%m/%Y %H:%M:%S")
+        task = Task.objects.create(user=request.user, title=bundle.data.get("title"),
+                                   description=bundle.data.get("description"), due_date=date_time,
+                                   set_alert=bundle.data.get("set_alert"))
+        bundle.obj = task
+        bundle.obj.save()
+        try:
+            task_id = int(bundle.data.get("sub_task"))
+        except:
+            task_id = None
+        if task_id:
+            task_obj = Task.objects.get(id=task_id)
+            try:
+                bundle.obj.sub_task.add(task_obj)
+                bundle.data.task_type = "child"
+                bundle.data.save()
+            except:
+                pass
+        return bundle
 
-    def task_delete(self, request, **kwargs):
-        pass
+    def task_create(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        task_resource = TaskResource()
+        bundle = task_resource.build_bundle(data=request.POST, request=request)
+        task_query_set = task_resource.get_object_list(request)
+        if task_query_set:
+            return self.create_response(request, {
+                'success': False,
+                'reason': 'Title Already Exist',
+            }, HttpBadRequest)
+        self.obj_create(bundle, request)
+        return self.create_response(request, {
+                'success': True,
+                'reason': 'Successfully added new task',
+            })
+
+    def task_update(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        task_resource = TaskResource()
+        task_query_set = task_resource.get_object_list(request)
+        if task_query_set:
+            task_obj = task_query_set[0]
+            task_obj.is_active = False
+            task_obj.save()
+            task_obj.sub_task.all().update(is_active=False)
+            return self.create_response(request, {
+                'success': True,
+                'reason': 'Successfully Deleted task',
+            })
+        return self.create_response(request, {
+            'success': False,
+            'reason': "Couldn't find the task. Please refresh page and try again",
+        })

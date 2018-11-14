@@ -17,8 +17,9 @@ TASK_TYPE = (
 
 
 class Task(TimeStampedModel):
+    is_active = models.BooleanField("Is Active", default=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    title = models.CharField("Title", max_length=255, unique=True, db_index=True)
+    title = models.CharField("Title", max_length=255, db_index=True)
     description = models.TextField("Description", blank=True, null=True)
     state = models.CharField("State", choices=STATE_CHOICES, max_length=10, default='pending')
     due_date = models.DateTimeField("Due Date", blank=True, null=True)
@@ -33,11 +34,7 @@ class Task(TimeStampedModel):
 
     class Meta:
         ordering = ("due_date",)
+        unique_together = ("user", "title",)
 
     def __str__(self):
-        return u"{title}_{id}".format(title=self.slug, id=self.id)
-
-    def save(self, **kwargs):
-        if self.sub_task:
-            self.task_type = 'child'
-        super(Task, self).save(**kwargs)
+        return u"{title}".format(title=self.slug)
