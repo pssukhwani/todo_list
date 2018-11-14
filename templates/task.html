@@ -44,7 +44,7 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="description">Set Alert Hours</label>
-                                <input type="number" class="form-control" name="set_alert" value="0">
+                                <input type="number" min="0" class="form-control" name="set_alert" value="0">
                             </div>
                             <small class="text-muted">This field is for to set hours before the due date and time of notification will be triggered</small>
                         </div>
@@ -56,9 +56,7 @@
                                 <select class="form-control" name="sub_task">
                                     <option value="SubTask">Sub Task</option>
                                     {% for item in task %}
-                                        {% if item.task_type == 'parent' %}
-                                            <option value="{{ item.id }}">{{ item.title }}</option>
-                                        {% endif %}
+                                        <option value="{{ item.id }}">{{ item.title }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -82,21 +80,80 @@
 {#                </div>#}
 {#            </form>#}
             <h2>Task</h2>
-            <div class="card-deck">
-                {% for item in task %}
-                    {% if item.task_type == 'parent' %}
-                        <div class="card col-md-3">
-                            <strong class="text-center">{{ item.title }}<a href="" class="badge badge-light float-right">
-                                <i class="fa fa-edit" style="font-size: 15px"></i></a>
-                                <a href="{% url 'api_task_update' api_name %}" name="{{ item.id }}" class="badge badge-light float-right deleteTask"><i class="fa fa-trash" style="font-size: 15px"></i></a>
-                            </strong>
-                            <div class="card-body text-center">
-                                <p class="card-text">{{ item.description }}</p>
+            {% for item in task %}
+                <input type="checkbox" name="{{ item.id }}" data-url="{% url 'api_task_update' api_name %}" class="form-control checkinput" {% if item.state == 'completed' %} checked {% else %}{% endif %}>
+                <small class="text-muted">If checked this will mark this and it's related tasks as completed</small>
+                <div {% if item.state == 'completed' %} class="card bg-light mb-3 cardActive" {% else %} class="card bg-light mb-3" {% endif %}>
+                    <div class="card-header">{{ item.title }}<a href="" class="badge badge-light float-right" data-toggle="modal" data-target="#myModal_{{ item.id }}">
+                        <i class="fa fa-edit" style="font-size: 15px"></i></a>
+                        <a href="{% url 'api_task_update' api_name %}" name="{{ item.id }}" class="badge badge-light float-right deleteTask"><i class="fa fa-trash" style="font-size: 15px"></i></a>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">{{ item.description }}</p>
+                    </div>
+                    <small class="text-muted" style="text-align: right; padding-right: 15px;">{{ item.due_date }}</small>
+                </div>
+            {% endfor %}
+            {% for modalitem in task %}
+                <div class="modal" id="myModal_{{ modalitem.id }}">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title">{{ modalitem.title }}</h4>
+                            </div>
+                            <div class="modal-body">
+                                <form class="form-horizontal">
+                                    <div class="form-group">
+                                        <label for="title" class="col-form-label">Title:</label>
+                                        <input type="text" class="form-control" id="title" name="modaltitle" value="{{ modalitem.title }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="description-text" class="col-form-label">Description:</label>
+                                        <textarea class="form-control" id="description-text" name="modaldescription">{{ modalitem.description }}</textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="date" class="col-form-label">Due Date Time:</label>
+                                        <input type="text" class="form-control" id="date" name="modaldate" value="{{ modalitem.due_date }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="setalert" class="col-form-label">Set Alert Hours:</label>
+                                        <input type="number" min="0" class="form-control" id="setalert" name="modalsetalert" value="{{ modalitem.set_alert }}">
+                                    </div>
+                                    <small class="text-muted">This field is for to set hours before the due date and time of notification will be triggered</small>
+                                    {% if modalitem.sub_task.all %}
+                                        <div class="form-group">
+                                            <strong for="setalert" class="col-form-label">Sub Task:</strong>
+                                            {% for subtask in modalitem.sub_task.all %}
+                                                <div class="form-group">
+                                                    <label for="subtasktitle" class="col-form-label">Title:</label>
+                                                    <input type="text" class="form-control subTaskTitle" name="subTaskTitle" value="{{ subtask.title }}">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="subtaskdescription" class="col-form-label">Description:</label>
+                                                    <input type="text" class="form-control subTaskDescription" name="subTaskDescription" value="{{ subtask.description }}">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="subtaskduedate" class="col-form-label">Due Date Time:</label>
+                                                    <input type="text" class="form-control subtaskduedate" name="subtaskduedate" value="{{ subtask.due_date }}">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="subtasksetalert" class="col-form-label">Set Alert Hours:</label>
+                                                    <input type="number" min="0" class="form-control subtasksetalert" name="subtasksetalert" value="{{ subtask.set_alert }}">
+                                                </div>
+                                                <small class="text-muted">This field is for to set hours before the due date and time of notification will be triggered</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-danger" data-dismiss="modal">Save</button>
+                                <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
                             </div>
                         </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
+                    </div>
+                </div>
+            {% endfor %}
         {% endif %}
     </div>
 {#            <ul id="myUL">#}
@@ -113,6 +170,36 @@
 {% block js %}
     <script type="application/javascript">
         $(document).ready(function () {
+            $(".checkinput").click(function () {
+                var currentObj = $(this);
+                var classObject = currentObj.next()[0].classList;
+                var classList = classObject.value.split(" ");
+                var className = "cardActive";
+                var needCheck;
+                if(classList.indexOf(className) === -1){
+                    classObject.add("cardActive");
+                    needCheck = true;
+                } else {
+                    classObject.remove("cardActive");
+                    needCheck = false;
+                }
+                $.ajax({
+                    url: currentObj.attr("data-url"),
+                    type: "POST",
+                    data: {"checked": currentObj.attr("name"), "needCheck": needCheck},
+                    success: function (response) {
+                        if (response.success) {
+                            $.toaster({ priority : 'success', title : 'Task', message : response.reason});
+                            setTimeout(function(){ location.reload();}, 500);
+                        } else {
+                            $.toaster({ priority : 'danger', title : 'Task', message : response.reason});
+                        }
+                    }, error: function () {
+                        $.toaster({ priority : 'danger', title : 'Title', message : "Something went wrong"});
+                    }
+                });
+                return false;
+            });
             $(".deleteTask").click(function () {
                 var confirmMessage = confirm("Are you sure you want to delete this and it's related tasks?");
                 if (!confirmMessage) {
@@ -193,30 +280,6 @@
                     return false;
                 }
             });
-            var myNodelist = document.getElementsByTagName("LI");
-            var i;
-            for (i = 0; i < myNodelist.length; i++) {
-              var deleteSpan = document.createElement("a");
-              var editSpan = document.createElement("a");
-              var deletetxt = document.createTextNode("\u00D7");
-              var editTxt = document.createTextNode("\u270E");
-              deleteSpan.className = "close";
-              editSpan.className = "edit";
-              deleteSpan.appendChild(deletetxt);
-              editSpan.appendChild(editTxt);
-              myNodelist[i].appendChild(deleteSpan);
-              myNodelist[i].appendChild(editSpan);
-            }
-
-            // Click on a close button to hide the current list item
-            var close = document.getElementsByClassName("close");
-            var i;
-            for (i = 0; i < close.length; i++) {
-              close[i].onclick = function() {
-                var div = this.parentElement;
-                div.style.display = "none";
-              }
-            }
 
             // Add a "checked" symbol when clicking on a list item
             {#var list = document.querySelector('ul');#}
@@ -252,20 +315,6 @@
             {#  }#}
             {#), false;#}
 
-            // Create a new list item when clicking on the "Add" button
-            function newElement() {
-              var li = document.createElement("li");
-              var inputValue = document.getElementById("myInput").value;
-              var inputNode = document.createTextNode(inputValue);
-              li.appendChild(inputNode);
-              if (inputValue === '') {
-                $.toaster({ priority : 'danger', title : 'ToDo', message : "Title cannot be empty"});
-              } else {
-                document.getElementById("myUL").appendChild(li);
-              }
-              document.getElementById("myInput").value = "";
-              document.getElementsByTagName("textarea")[0].value = "";
-            }
         });
     </script>
 {% endblock %}

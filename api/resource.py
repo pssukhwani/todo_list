@@ -88,8 +88,9 @@ class TaskResource(ModelResource):
 
     def get_object_list(self, request):
         task = super(TaskResource, self).get_object_list(request)
-        if request.POST.get("delete"):
-            return task.filter(id=request.POST.get("delete"), user=request.user, is_active=True)
+        if request.POST.get("delete") or request.POST.get("checked"):
+            task_id = request.POST.get("delete") or request.POST.get("checked")
+            return task.filter(id=task_id, user=request.user, is_active=True)
         return task.filter(title=request.POST.get("title"), user=request.user, is_active=True)
 
     def obj_create(self, bundle, request=None, **kwargs):
@@ -97,8 +98,6 @@ class TaskResource(ModelResource):
         task = Task.objects.create(user=request.user, title=bundle.data.get("title"),
                                    description=bundle.data.get("description"), due_date=date_time,
                                    set_alert=bundle.data.get("set_alert"))
-        bundle.obj = task
-        bundle.obj.save()
         try:
             task_id = int(bundle.data.get("sub_task"))
         except:
@@ -107,10 +106,12 @@ class TaskResource(ModelResource):
             task_obj = Task.objects.get(id=task_id)
             try:
                 bundle.obj.sub_task.add(task_obj)
-                bundle.data.task_type = "child"
-                bundle.data.save()
+                task.task_type = "child"
+                task.save()
             except:
                 pass
+        bundle.obj = task
+        bundle.obj.save()
         return bundle
 
     def task_create(self, request, **kwargs):
@@ -133,8 +134,8 @@ class TaskResource(ModelResource):
         self.method_check(request, allowed=['post'])
         task_resource = TaskResource()
         task_query_set = task_resource.get_object_list(request)
-        if task_query_set:
-            task_obj = task_query_set[0]
+        task_obj = task_query_set[0]
+        if request.POST.get("delete"):
             task_obj.is_active = False
             task_obj.save()
             task_obj.sub_task.all().update(is_active=False)
@@ -142,7 +143,20 @@ class TaskResource(ModelResource):
                 'success': True,
                 'reason': 'Successfully Deleted task',
             })
-        return self.create_response(request, {
-            'success': False,
-            'reason': "Couldn't find the task. Please refresh page and try again",
-        })
+        elif request.POST.get("checked"):
+            if request.POST.get("needCheck") == 'true':
+                task_obj.state = 'completed'
+                task_obj.sub_task.all().update(state='completed')
+            else:
+                task_obj.state = 'pending'
+                task_obj.sub_task.all().update(state='pending')
+            task_obj.save()
+            return self.create_response(request, {
+                'success': True,
+                'reason': 'Successfully saved task preferences',
+            })
+        else:
+            return self.create_response(request, {
+                'success': False,
+                'reason': "Couldn't find the task. Please refresh page and try again",
+            })
