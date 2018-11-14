@@ -172,7 +172,7 @@
         $(document).ready(function () {
             $(".checkinput").click(function () {
                 var currentObj = $(this);
-                var classObject = currentObj.next()[0].classList;
+                var classObject = currentObj.next().next()[0].classList;
                 var classList = classObject.value.split(" ");
                 var className = "cardActive";
                 var needCheck;
