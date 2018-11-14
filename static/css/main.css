@@ -8,3 +8,54 @@ body {
 .my-valid-class {
     color:#00CC00; /* green */
 }
+
+.btn-info {
+    color: #fff;
+    background-color: #5bc0de;
+    border-color: #46b8da;
+}
+
+.btn {
+    display: inline-block;
+    padding: 6px 12px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.42857143;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.btn-lg {
+    padding: 10px 16px;
+    font-size: 18px;
+    line-height: 1.3333333;
+    border-radius: 6px
+}
+
+/*.glyphicon {*/
+    /*position: relative;*/
+    /*top: 1px;*/
+    /*display: inline-block;*/
+    /*font-family: "Glyphicons Halflings";*/
+    /*font-style: normal;*/
+    /*font-weight: 400;*/
+    /*line-height: 1;*/
+    /*-webkit-font-smoothing: antialiased;*/
+/*}*/
+
+/*.glyphicon-log-out:before {*/
+    /*content: "\e163"*/
+/*}*/
+

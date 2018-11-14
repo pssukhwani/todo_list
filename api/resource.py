@@ -81,15 +81,24 @@ class TaskResource(ModelResource):
     def prepend_urls(self):
         return [
             url(r"^task", self.wrap_view('task'), name="api_task"),
-            url(r"^task-delete", self.wrap_view('task-update'), name="api_task_update"),
+            url(r"^task-delete", self.wrap_view('task_delete'), name="api_task_update"),
         ]
 
     def get_object_list(self, request):
         task = super(TaskResource, self).get_object_list(request)
-        return task.filter(user=request.user)
+        return task.get(id=request.user)
 
     def task(self, request, **kwargs):
-        pass
+        title = request.POST.get("title")
+        description = request.POST.get("description")
+        sub_task = request.POST.get("sub_task")
+        due_date = request.POST.get("date")
+        set_alert = request.POST.get("set_alert")
+        task_object = self.get_object_list(request)
+        if task_object:
+            task_object.get(id=request.POST.get("id"))
+        else:
+            Task.objects.create(user=request.user, title=request.POST)
 
-    def task_update(self, request, **kwargs):
+    def task_delete(self, request, **kwargs):
         pass

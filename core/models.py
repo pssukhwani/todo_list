@@ -11,9 +11,10 @@ STATE_CHOICES = (
 )
 
 TASK_TYPE = (
-    ('standalone', 'Standalone'),
+    ('parent', 'Parent'),
     ('child', 'Child'),
 )
+
 
 class Task(TimeStampedModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -22,9 +23,8 @@ class Task(TimeStampedModel):
     state = models.CharField("State", choices=STATE_CHOICES, max_length=10, default='pending')
     due_date = models.DateTimeField("Due Date", blank=True, null=True)
     slug = AutoSlugField(populate_from='title')
-    sub_task = models.ForeignKey("self", blank=True, null=True, help_text="This is for sub task",
-                                 on_delete=models.SET_NULL)
-    task_type = models.CharField("Task Type", choices=TASK_TYPE, max_length=11, default='standalone',
+    sub_task = models.ManyToManyField("self", blank=True, null=True, help_text="This is for sub task")
+    task_type = models.CharField("Task Type", choices=TASK_TYPE, max_length=11, default='parent',
                                  help_text='This is used to differentiate if the task is sub-task then it will be '
                                            'changed child.')
     set_alert = models.PositiveSmallIntegerField(default=0, blank=True, null=True,
