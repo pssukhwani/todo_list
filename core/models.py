@@ -26,7 +26,6 @@ class Task(TimeStampedModel):
 
     class Meta:
         ordering = ("due_date",)
-        unique_together = ("user", "title",)
 
     def __str__(self):
         return u"{title}".format(title=self.slug)

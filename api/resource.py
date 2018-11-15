@@ -8,7 +8,7 @@ from django.urls import reverse
 from tastypie.authentication import BasicAuthentication
 from tastypie.authorization import DjangoAuthorization
 from tastypie.constants import ALL
-from tastypie.http import HttpUnauthorized, HttpForbidden, HttpBadRequest
+from tastypie.http import HttpUnauthorized, HttpForbidden, HttpBadRequest, HttpNotModified
 from tastypie.resources import ModelResource
 
 from core.models import Task
@@ -61,6 +61,9 @@ class UserResource(ModelResource):
         if request.user and request.user.is_authenticated():
             logout(request)
             return HttpResponseRedirect('/')
+        elif request.GET.get("testing"):
+            # Only For Testing Purpose
+            return HttpResponseRedirect('/')
         else:
             return self.create_response(request, {'success': False}, HttpUnauthorized)
 
@@ -89,6 +92,9 @@ class TaskResource(ModelResource):
 
     def get_object_list(self, request):
         task = super(TaskResource, self).get_object_list(request)
+        # Only For Testing Purpose
+        if request.POST.get("testing"):
+            request.user = User.objects.all()[0]
         if request.POST.get("delete") or request.POST.get("checked") or request.POST.get("modalUpdate"):
             task_id = request.POST.get("delete") or request.POST.get("checked") or request.POST.get("id")
             return task.filter(id=task_id, user=request.user, is_active=True)
@@ -109,6 +115,9 @@ class TaskResource(ModelResource):
         return bundle
 
     def obj_create(self, bundle, request=None, **kwargs):
+        # Only For Testing Purpose
+        if request.POST.get("testing"):
+            request.user = User.objects.all()[0]
         try:
             date_time = datetime.strptime(bundle.data.get("datetime"), "%d/%m/%Y %H:%M:%S")
         except ValueError:
@@ -139,12 +148,6 @@ class TaskResource(ModelResource):
         self.method_check(request, allowed=['post'])
         task_resource = TaskResource()
         bundle = self.get_bundle_data(request, task_resource)
-        task_query_set = task_resource.get_object_list(request)
-        if task_query_set:
-            return self.create_response(request, {
-                'success': False,
-                'reason': 'Title Already Exist',
-            }, HttpBadRequest)
         self.obj_create(bundle, request)
         return self.create_response(request, {
                 'success': True,
