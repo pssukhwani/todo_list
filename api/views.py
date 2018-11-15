@@ -12,13 +12,12 @@ def home_page(request):
         today = datetime.today().date()
         start_day = today - timedelta(days=today.weekday())
         end_day = start_day + timedelta(days=6)
-        over_due = today - timedelta(days=1)
         task = Task.objects.filter(user=request.user, is_active=True)
         if request.GET.get("search"):
             task = task.filter(title__icontains=request.GET.get("search"))
         if filter_by in filter_list:
             if filter_by == 'over_due':
-                task = task.filter(due_date__lte=over_due)
+                task = task.filter(due_date__lt=today)
             if filter_by == 'today':
                 task = task.filter(due_date=today)
             if filter_by == 'this_week':
