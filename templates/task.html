@@ -19,7 +19,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Title</label>
+                                <label for="title">Title</label>
                                 <input type="text" class="form-control" id="title" placeholder="Enter Title" name="title">
                             </div>
                         </div>
@@ -35,7 +35,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="description">Due Date Time</label>
+                                <label for="datetime">Due Date Time</label>
                                 <input type="text" class="form-control datepicker" name="datetime" placeholder="Set Due Date Time">
                             </div>
                         </div>
@@ -43,7 +43,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="description">Set Alert Hours</label>
+                                <label for="set_alert">Set Alert Hours</label>
                                 <input type="number" min="0" class="form-control" name="set_alert" value="0">
                             </div>
                             <small class="text-muted">This field is for to set hours before the due date and time of notification will be triggered</small>
@@ -52,7 +52,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="description">Sub Task</label>
+                                <label for="sub_task">Sub Task</label>
                                 <select class="form-control" name="sub_task">
                                     <option value="SubTask">Sub Task</option>
                                     {% for item in task %}
@@ -67,18 +67,33 @@
                 </form>
             </div>
         </div>
+        <form method="get" action="{% url 'home' %}" id="taskSearchForm">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="search">Search</label>
+                        <input type="text" class="form-control" id="search" placeholder="Search with Title" name="search">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="filter_by_due_date">Filter By Due Date</label>
+                        <select class="form-control" name="filter_by_due_date">
+                                <option value="--">--</option>
+                                <option value="today">Today</option>
+                                <option value="this_week">This Week</option>
+                                <option value="next_week">Next Week</option>
+                                <option value="over_due">Over Due</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <br>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
         {% if task %}
-{#            <form method="post" action="{% url 'home' %}" id="taskSearchForm">#}
-{#                {% csrf_token %}#}
-{#                <div class="row">#}
-{#                    <div class="col-md-6">#}
-{#                        <div class="form-group">#}
-{#                            <label>Search</label>#}
-{#                            <input type="text" class="form-control" id="search" placeholder="Search with Title" name="search">#}
-{#                        </div>#}
-{#                    </div>#}
-{#                </div>#}
-{#            </form>#}
             <h2>Task</h2>
             {% for item in task %}
                 <input type="checkbox" name="{{ item.id }}" data-url="{% url 'api_task_update' api_name %}" class="form-control checkinput" {% if item.state == 'completed' %} checked {% else %}{% endif %}>
@@ -159,6 +174,8 @@
                     </div>
                 </div>
             {% endfor %}
+        {% else %}
+            No task found
         {% endif %}
     </div>
 {% endblock %}
@@ -168,56 +185,31 @@
         $(document).ready(function () {
             $(".taskModalForm").submit(function (event) {
                 var currentObject = $(this)[0];
-                    $.ajax({
-                        url: currentObject.action,
-                        type: "POST",
-                        data: $(currentObject).serialize(),
-                        success: function (response) {
-                            if (response.success) {
-                                $.toaster({priority: 'success', title: 'Task', message: response.reason});
-                                setTimeout(function () {
-                                    location.reload();
-                                }, 500);
-                            } else {
-                                debugger;
-                                $.toaster({priority: 'danger', title: 'Task', message: response.reason});
-                            }
-                            event.preventDefault();
-                        }, error: function () {
-                            $.toaster({ priority: 'danger', title: 'Task', message: "Task with same title already exist"});
-                        }
-                    });
+                var currentTitle = this[3].value;
+                if (!currentTitle){
+                    $.toaster({priority: 'danger', title: 'Task', message: "Please enter title"});
+                    event.preventDefault();
                     return false;
-            });
-            $(".taskdModalForm").validate({
-                {#errorClass: "my-error-class",#}
-                {#validClass: "my-valid-class",#}
-                {#rules: {#}
-                {#    title: "required",#}
-                {#messages: {#}
-                {#    title: "Please enter title",#}
-                {#submitHandler: function (event) {#}
-                {#    var currentObject = $(this.currentForm)[0];#}
-                {#    debugger;#}
-                {#    $.ajax({#}
-                {#        url: currentObject.action,#}
-                {#        type: "POST",#}
-                {#        data: $(currentObject).serialize(),#}
-                {#        success: function (response) {#}
-                {#            if (response.success) {#}
-                {#                $.toaster({priority: 'success', title: 'Task', message: response.reason});#}
-                {#                setTimeout(function () {#}
-                {#                    location.reload();#}
-                {#                }, 500);#}
-                {#            } else {#}
-                {#                $.toaster({priority: 'danger', title: 'Task', message: response.reason});#}
-                {#            }#}
-                {#            event.preventDefault();#}
-                {#        }, error: function () {#}
-                {#            $.toaster({ priority: 'danger', title: 'Task', message: "Task with same title already exist"});#}
-                {#        }#}
-                {#    });#}
-                {#    return false;#}
+                }
+                $.ajax({
+                    url: currentObject.action,
+                    type: "POST",
+                    data: $(currentObject).serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            $.toaster({priority: 'success', title: 'Task', message: response.reason});
+                            setTimeout(function () {
+                                location.reload();
+                            }, 500);
+                        } else {
+                            $.toaster({priority: 'danger', title: 'Task', message: response.reason});
+                        }
+                        event.preventDefault();
+                    }, error: function () {
+                        $.toaster({ priority: 'danger', title: 'Task', message: "Task with same title already exist"});
+                    }
+                });
+                return false;
             });
             $(".checkinput").click(function () {
                 var currentObj = $(this);
@@ -275,29 +267,6 @@
             $('.datepicker').datetimepicker({
                 format: "DD/MM/YYYY HH:mm:ss",
                 dayViewHeaderFormat: "DD/MM/YYYY HH:mm:ss"
-            });
-
-            $('#search').bind('keyup', function() {
-                $('#taskSearchForm').submit();
-            });
-
-            $('#taskSearchForm').validate({
-                submitHandler: function(form, event) {
-                    $.ajax({
-                        url: form.action,
-                        type: "POST",
-                        data: $(form).serialize(),
-                        success: function (response) {
-                            if (response.success) {
-                                $.toaster({ priority : 'success', title : 'Task', message : response.reason});
-                                setTimeout(function(){ location.reload();}, 500);
-                            }
-                        }, error: function () {
-                            $.toaster({ priority : 'danger', title : 'Title', message : "Something went wrong"});
-                        }
-                    });
-                    return false;
-                }
             });
 
             $("#taskAddForm").validate({
