@@ -180,7 +180,7 @@ class TaskResource(ModelResource):
             return self.create_response(request, {
                 'success': False,
                 'reason': "Couldn't find the task. Please refresh page and try again",
-            })
+            }, HttpBadRequest)
         task_obj = task_query_set[0]
         if request.POST.get("delete"):
             task_obj.is_active = False
@@ -211,4 +211,4 @@ class TaskResource(ModelResource):
         return self.create_response(request, {
             'success': False,
             'reason': "Couldn't find the task. Please refresh page and try again",
-        })
+        }, HttpBadRequest)
