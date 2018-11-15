@@ -13,7 +13,7 @@ from tastypie.resources import ModelResource
 
 from core.models import Task
 from tastypie import fields
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class UserResource(ModelResource):
@@ -84,6 +84,7 @@ class TaskResource(ModelResource):
         return [
             url(r"^task-create", self.wrap_view('task_create'), name="api_task"),
             url(r"^task-update", self.wrap_view('task_update'), name="api_task_update"),
+            url(r"^task-detail", self.wrap_view('task_details'), name="api_task_detail"),
         ]
 
     def get_object_list(self, request):
@@ -149,6 +150,26 @@ class TaskResource(ModelResource):
                 'success': True,
                 'reason': 'Successfully added new task',
             })
+
+    def task_details(self, request, **kwargs):
+        self.method_check(request, allowed=['get'])
+        task_query_set = Task.objects.filter(is_active=True)
+        task_list_ids = []
+        for task in task_query_set:
+            if task.due_date:
+                task_with_alert = task.due_date.replace(tzinfo=None) - timedelta(hours=task.set_alert)
+                if task_with_alert <= datetime.today():
+                    task_list_ids.append(task.id)
+        if task_list_ids:
+            return self.create_response(request, {
+                    'success': True,
+                    'reason': 'New Notification',
+                    'task': list(task_query_set.filter(id__in=task_list_ids).values())
+                })
+        return self.create_response(request, {
+            'success': True,
+            'reason': 'No New Notification',
+        })
 
     def task_update(self, request, **kwargs):
         self.method_check(request, allowed=['post'])

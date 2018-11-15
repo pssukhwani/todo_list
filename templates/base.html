@@ -33,11 +33,11 @@
             </a>
             <ul id="nav">
                 <li id="notification_li">
-                    <span id="notification_count">3</span>
+                    <span id="notification_count"></span>
                     <a href="#" id="notificationLink">Notifications</a>
                     <div id="notificationContainer">
                         <div id="notificationTitle">Task Pending</div>
-                        <div class="notificationBody"><p>Your task: Title has a due date of today. Please finish soon.</p></div>
+                        <div id="notificationBodyDiv"></div>
                         <div id="notificationFooter"><a href="#">Clear All</a></div>
                     </div>
                 </li>
@@ -66,14 +66,26 @@
                 });
                 let ajax_call = function() {
                     $.ajax({
-                        url: currentObject.action,
+                        url: "todo/task-detail",
                         type: "GET",
+                        async: false,
                         success: function (response) {
                             if (response.success) {
-                                $.toaster({priority: 'success', title: 'Task', message: response.reason});
-                                setTimeout(function () {
-                                    location.reload();
-                                }, 500);
+                                if (!response.task){
+                                    $("#notificationBodyDiv").html("<div class='notificationBody'></div>");
+                                    $("#notification_count").css("background", "none");
+                                    return false
+                                }
+                                $.toaster({priority: 'success', title: 'Notification', message: response.reason});
+                                var notificationBody = '';
+                                var notificationCount = 0;
+                                for(var i=0; i<response.task.length; i++) {
+                                    notificationCount += 1;
+                                    var currentDueDateTime = new Date(response.task[i].due_date);
+                                    notificationBody += "<div class='notificationBody'>" + response.task[i].title + " has a due date of " + currentDueDateTime.getDate() + "/" + (currentDueDateTime.getMonth() + 1) + "/" + currentDueDateTime.getFullYear() + " " + currentDueDateTime.getHours() + ":" + currentDueDateTime.getMinutes() + ". Please finish soon.</div>"
+                                }
+                                $("#notification_count").html(notificationCount);
+                                $("#notificationBodyDiv").append(notificationBody);
                             } else {
                                 $.toaster({priority: 'danger', title: 'Task', message: response.reason});
                             }
@@ -84,7 +96,8 @@
                     });
                     return false;
                 };
-                let interval = 1000 * 60;
+                ajax_call()
+                let interval = 1000 * 60 * 10;
                 setInterval(ajax_call, interval);
             });
         </script>
