@@ -44,18 +44,87 @@ body {
     border-radius: 6px
 }
 
-/*.glyphicon {*/
-    /*position: relative;*/
-    /*top: 1px;*/
-    /*display: inline-block;*/
-    /*font-family: "Glyphicons Halflings";*/
-    /*font-style: normal;*/
-    /*font-weight: 400;*/
-    /*line-height: 1;*/
-    /*-webkit-font-smoothing: antialiased;*/
-/*}*/
 
-/*.glyphicon-log-out:before {*/
-    /*content: "\e163"*/
-/*}*/
+#nav {
+    list-style: none;
+    margin: 15px 30px;
+    float: right;
+}
+
+#nav li {
+  font-weight:bold;
+}
+
+#nav li a{
+  color:#333333;
+  text-decoration:none
+}
+
+#nav li a:hover{
+  color:#006699;
+  text-decoration:none
+}
+
+#notification_li{
+  position:relative
+}
+
+#notificationContainer {
+  background-color: #fff;
+  border: 1px solid rgba(100, 100, 100, .4);
+  -webkit-box-shadow: 0 3px 8px rgba(0, 0, 0, .25);
+  overflow: visible;
+  position: absolute;
+  top: 30px;
+  margin-left: -150px;
+  width: 400px;
+  display: none; // Enable this after jquery implementation
+}
+
+#notificationContainer:before {
+  content: '';
+  display: block;
+  position: absolute;
+  width: 0;
+  height: 0;
+  color: transparent;
+  border: 10px solid black;
+  border-color: transparent transparent white;
+  margin-top: -20px;
+  margin-left: 188px;
+}
+
+#notificationTitle {
+  padding: 8px;
+  position: absolute;
+  width: 384px;
+  border-bottom: 1px solid #dddddd;
+}
+
+.notificationBody {
+  padding: 40px 0px 0px 10px;
+}
+
+#notificationFooter {
+  background-color: #e9eaed;
+  text-align: center;
+  font-weight: bold;
+  padding: 8px;
+  font-size: 12px;
+  border-top: 1px solid #dddddd;
+}
+
+#notification_count {
+  padding: 3px 7px 3px 7px;
+  background: #cc0000;
+  color: #ffffff;
+  font-weight: bold;
+  margin-left: 100px;
+  border-radius: 9px;
+  -moz-border-radius: 9px;
+  -webkit-border-radius: 9px;
+  position: absolute;
+  margin-top: -11px;
+  font-size: 11px;
+}
 

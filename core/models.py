@@ -10,11 +10,6 @@ STATE_CHOICES = (
     ('completed', 'Completed'),
 )
 
-TASK_TYPE = (
-    ('parent', 'Parent'),
-    ('child', 'Child'),
-)
-
 
 class Task(TimeStampedModel):
     is_active = models.BooleanField("Is Active", default=True)
@@ -25,9 +20,6 @@ class Task(TimeStampedModel):
     due_date = models.DateTimeField("Due Date", blank=True, null=True)
     slug = AutoSlugField(populate_from='title')
     sub_task = models.ManyToManyField("self", blank=True, null=True, help_text="This is for sub task")
-    task_type = models.CharField("Task Type", choices=TASK_TYPE, max_length=11, default='parent',
-                                 help_text='This is used to differentiate if the task is sub-task then it will be '
-                                           'changed child.')
     set_alert = models.PositiveSmallIntegerField(default=0, blank=True, null=True,
                                                  help_text="This is used for alert message. If you want to trigger "
                                                            "alert before due date then only set this.")

@@ -6,8 +6,7 @@ from core.models import Task
 
 
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ('title', 'due_date', 'user', 'state', 'task_type',)
-    exclude = ('task_type',)
+    list_display = ('title', 'due_date', 'user', 'state',)
 
 
 admin.site.register(Task, TaskAdmin)

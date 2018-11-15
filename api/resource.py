@@ -122,8 +122,7 @@ class TaskResource(ModelResource):
         if task_id:
             task_obj = Task.objects.get(id=task_id)
             try:
-                bundle.obj.sub_task.add(task_obj)
-                task.task_type = "child"
+                task.sub_task.add(task_obj)
                 task.save()
             except:
                 pass

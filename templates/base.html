@@ -31,9 +31,63 @@
             <a href="{% url 'api_logout' api_name %}" id="LogoutButton" class="btn btn-info btn-lg" style="float: right; margin: 10px 30px;">
               <i class="fa fa-sign-out"></i> Logout
             </a>
+            <ul id="nav">
+                <li id="notification_li">
+                    <span id="notification_count">3</span>
+                    <a href="#" id="notificationLink">Notifications</a>
+                    <div id="notificationContainer">
+                        <div id="notificationTitle">Task Pending</div>
+                        <div class="notificationBody"><p>Your task: Title has a due date of today. Please finish soon.</p></div>
+                        <div id="notificationFooter"><a href="#">Clear All</a></div>
+                    </div>
+                </li>
+            </ul>
         {% endif %}
         {% block body %}{% endblock %}
         <p class="mt-5 mb-3 text-muted" style="text-align: center;">Source Code - <a href="https://github.com/pssukhwani/todo_list" target="_blank">GitHub</a></p>
+        <script type="application/javascript">
+            $(document).ready(function(){
+                $("#notificationLink").click(function() {
+                    $("#notificationContainer").fadeToggle(300);
+                    return false;
+                });
+                $("#notificationFooter").click(function() {
+                    $("#notification_count").fadeOut("slow");
+                    $(".notificationBody").html("");
+                    return false;
+                });
+                //Document Click hiding the popup
+                $(document).click(function(){
+                    $("#notificationContainer").fadeOut("slow");
+                });
+                //Popup on click
+                $("#notificationContainer").click(function(){
+                    return false;
+                });
+                let ajax_call = function() {
+                    $.ajax({
+                        url: currentObject.action,
+                        type: "GET",
+                        success: function (response) {
+                            if (response.success) {
+                                $.toaster({priority: 'success', title: 'Task', message: response.reason});
+                                setTimeout(function () {
+                                    location.reload();
+                                }, 500);
+                            } else {
+                                $.toaster({priority: 'danger', title: 'Task', message: response.reason});
+                            }
+                            event.preventDefault();
+                        }, error: function () {
+                            $.toaster({ priority: 'danger', title: 'Task', message: "Task with same title already exist"});
+                        }
+                    });
+                    return false;
+                };
+                let interval = 1000 * 60 * X;
+                setInterval(ajax_call, interval);
+            });
+        </script>
         {% block js %}{% endblock %}
     </body>
 </html>
