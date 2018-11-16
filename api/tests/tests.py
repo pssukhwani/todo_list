@@ -20,11 +20,6 @@ class TestMyView(object):
         user = User.objects.create(username="testuser", email="testuser@test.com", password="django123")
         return user
 
-    def get_task(self):
-        task = Task.objects.all(title="test", description="test", user=self.create_user, due_date=datetime.today(),
-                                   set_alert=3)
-        return task
-
     def get_hostname(self):
         if settings.DEBUG:
             host_name = "https://pradeepsukhwani.pythonanywhere.com/"
