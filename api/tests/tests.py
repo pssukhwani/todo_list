@@ -49,12 +49,12 @@ class TestMyView(object):
     @pytest.mark.django_db(transaction=True)
     def test_task_update(self):
         update_response = post(self.get_hostname() + reverse("api_task_update", kwargs={"api_name": "todo"}),
-                               data={"id": 18, "title": "test2", "description": "test2", "testing": True,
+                               data={"id": 19, "title": "test2", "description": "test2", "testing": True,
                                      "date": datetime.today().strftime("%d/%m/%Y %H:%M:%S"), "set_alert": 3, "modalUpdate": True})
-        delete_reponse = post(self.get_hostname() + reverse("api_task_update", kwargs={"api_name": "todo"}),
-                              data={"delete": 18, "testing": True})
         check_response = post(self.get_hostname() + reverse("api_task_update", kwargs={"api_name": "todo"}),
-                              data={"checked": 18, "testing": True})
+                              data={"checked": 19, "testing": True})
+        delete_reponse = post(self.get_hostname() + reverse("api_task_update", kwargs={"api_name": "todo"}),
+                              data={"delete": 19, "testing": True})
         assert delete_reponse.status_code == 200
         assert check_response.status_code == 200
         assert update_response.status_code == 200
