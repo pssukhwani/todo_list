@@ -20,8 +20,8 @@ class TestMyView(object):
         user = User.objects.create(username="testuser", email="testuser@test.com", password="django123")
         return user
 
-    def create_task(self):
-        task = Task.objects.create(title="test", description="test", user=self.create_user, due_date=datetime.today(),
+    def get_task(self):
+        task = Task.objects.all(title="test", description="test", user=self.create_user, due_date=datetime.today(),
                                    set_alert=3)
         return task
 
@@ -50,3 +50,16 @@ class TestMyView(object):
                         data={"title": "test2", "description": "test2", "user": self.create_user(), "testing": True,
                               "datetime": datetime.today().strftime("%d/%m/%Y %H:%M:%S"), "set_alert": 3})
         assert response.status_code == 200
+
+    @pytest.mark.django_db(transaction=True)
+    def test_task_update(self):
+        update_response = post(self.get_hostname() + reverse("api_task_update", kwargs={"api_name": "todo"}),
+                               data={"id": 18, "title": "test2", "description": "test2", "testing": True,
+                                     "date": datetime.today().strftime("%d/%m/%Y %H:%M:%S"), "set_alert": 3, "modalUpdate": True})
+        delete_reponse = post(self.get_hostname() + reverse("api_task_update", kwargs={"api_name": "todo"}),
+                              data={"delete": 18, "testing": True})
+        check_response = post(self.get_hostname() + reverse("api_task_update", kwargs={"api_name": "todo"}),
+                              data={"checked": 18, "testing": True})
+        assert delete_reponse.status_code == 200
+        assert check_response.status_code == 200
+        assert update_response.status_code == 200
